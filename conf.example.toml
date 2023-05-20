@@ -1,0 +1,3 @@
+[[monitors]]
+push_url = "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
+monitor_url = "https://github.com/healthz"
