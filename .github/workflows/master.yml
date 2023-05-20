@@ -24,10 +24,29 @@ jobs:
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
           extra_args: --debug --only-verified
-      - name: Setup tarpaulin
-        run: cargo install cargo-tarpaulin
+      - name: Setup grcov
+        run: cargo install grcov
       - name: Build
         run: cargo build
+        env:
+          RUSTFLAGS: "-Cinstrument-coverage -Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
+          RUSTC_BOOTSTRAP: "1"
+          CARGO_INCREMENTAL: "0"
+          RUSTDOCFLAGS: "-Cpanic=abort"
       - name: Test
-        run: cargo tarpaulin --out Lcov
+        run: cargo test
+        env:
+          RUSTFLAGS: "-Cinstrument-coverage -Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
+          RUSTC_BOOTSTRAP: "1"
+          CARGO_INCREMENTAL: "0"
+          RUSTDOCFLAGS: "-Cpanic=abort"
+          LLVM_PROFILE_FILE: "your_name-%p-%m.profraw"
+      - name: Generate coverage
+        run: grcov . -s . --binary-path ./target/debug/ -t lcov --branch --ignore-not-existing -o ./target/debug/coverage/
+        env:
+          RUSTFLAGS: "-Cinstrument-coverage -Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
+          RUSTC_BOOTSTRAP: "1"
+          CARGO_INCREMENTAL: "0"
+          RUSTDOCFLAGS: "-Cpanic=abort"
+          LLVM_PROFILE_FILE: "your_name-%p-%m.profraw"
       - uses: codecov/codecov-action@v3
