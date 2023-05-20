@@ -21,7 +21,10 @@ jobs:
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
           extra_args: --debug --only-verified
+      - name: Setup tarpaulin
+        run: cargo install cargo-tarpaulin
       - name: Build
         run: cargo build
       - name: Test
-        run: cargo test
+        run: cargo tarpaulin --out Lcov
+      - uses: codecov/codecov-action@v3

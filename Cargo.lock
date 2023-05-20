@@ -456,20 +456,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kuma-relay"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures",
- "json5",
- "reqwest",
- "serde",
- "serde_yaml",
- "tokio",
- "toml",
-]
-
-[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -770,6 +756,20 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "winreg",
+]
+
+[[package]]
+name = "roselite"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures",
+ "json5",
+ "reqwest",
+ "serde",
+ "serde_yaml",
+ "tokio",
+ "toml",
 ]
 
 [[package]]
