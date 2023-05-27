@@ -30,6 +30,7 @@ jobs:
         with:
           toolchain: nightly
           override: true
+          components: rustfmt, clippy
 
       - name: Formatting check
         uses: actions-rs/cargo@v1
