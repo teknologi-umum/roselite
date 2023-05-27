@@ -4,7 +4,7 @@ use anyhow::Result;
 use reqwest::{Client, Method, StatusCode, Url};
 use tokio::time::Instant;
 
-use crate::config::Monitor;
+use roselite_config::Monitor;
 
 /// perform_task calls the monitor endpoint to create a heartbeat that will be sent to the
 /// push endpoint.

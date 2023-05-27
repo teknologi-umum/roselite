@@ -64,7 +64,7 @@ impl Configuration {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::Configuration;
+    use crate::Configuration;
 
     #[test]
     fn parse_toml_configuration() {

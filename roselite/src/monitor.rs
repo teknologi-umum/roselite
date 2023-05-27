@@ -1,24 +1,15 @@
-use std::{env, process};
+use roselite_config::Monitor;
+use roselite_request::perform_task;
+use std::process::Output;
+use std::time::Duration;
+use tokio::spawn;
+use tokio::task::JoinHandle;
+use tokio::time::{sleep, Instant};
 
-use anyhow::Result;
-use futures::future;
-use tokio::time::{sleep, Duration, Instant};
-use tokio::{signal, spawn};
+pub fn configure_monitors(monitors: Vec<Monitor>) -> Vec<JoinHandle<Output>> {
+    let mut handles: Vec<JoinHandle<Output>> = vec![];
 
-use crate::config::{Configuration, Monitor};
-use crate::task_runner::perform_task;
-
-mod config;
-mod task_runner;
-
-#[tokio::main]
-async fn main() -> Result<()> {
-    let configuration_file_path: String =
-        env::var("CONFIGURATION_FILE_PATH").unwrap_or(String::from("conf.toml"));
-    let configuration: Configuration = Configuration::from_file(&configuration_file_path)?;
-
-    let mut handles = vec![];
-    for monitor in configuration.monitors {
+    for monitor in monitors {
         println!("Starting monitor for {}", monitor.monitor_url);
         handles.push(spawn(async move {
             let cloned_monitor: Monitor = monitor.clone();
@@ -47,18 +38,5 @@ async fn main() -> Result<()> {
         }));
     }
 
-    match signal::ctrl_c().await {
-        Ok(()) => {
-            println!("Received a shutdown signal, exiting...");
-            process::exit(0);
-        }
-        Err(err) => {
-            eprintln!("Unable to listen for shutdown signal: {}", err);
-        }
-    }
-
-    // This is here just because we don't want the application to immediately exits.
-    future::join_all(handles).await;
-
-    Ok(())
+    return handles;
 }
