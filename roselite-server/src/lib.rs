@@ -1,8 +1,7 @@
-use std::net::SocketAddr;
 use crate::routes::register_routes;
 use anyhow::Result;
 use axum::Server;
-use tokio::net::TcpListener;
+use std::net::SocketAddr;
 
 mod handlers;
 mod routes;

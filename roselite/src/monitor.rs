@@ -1,13 +1,12 @@
 use roselite_config::Monitor;
 use roselite_request::perform_task;
-use std::process::Output;
 use std::time::Duration;
 use tokio::spawn;
 use tokio::task::JoinHandle;
 use tokio::time::{sleep, Instant};
 
-pub fn configure_monitors(monitors: Vec<Monitor>) -> Vec<JoinHandle<Output>> {
-    let mut handles: Vec<JoinHandle<Output>> = vec![];
+pub fn configure_monitors(monitors: Vec<Monitor>) -> Vec<JoinHandle<()>> {
+    let mut handles: Vec<JoinHandle<()>> = vec![];
 
     for monitor in monitors {
         println!("Starting monitor for {}", monitor.monitor_url);
@@ -38,5 +37,5 @@ pub fn configure_monitors(monitors: Vec<Monitor>) -> Vec<JoinHandle<Output>> {
         }));
     }
 
-    return handles;
+    handles
 }

@@ -1,20 +1,13 @@
 mod cli;
 mod monitor;
-
-use std::borrow::Cow;
-use std::process::Output;
-use std::{env, process};
-
 use anyhow::Result;
-use clap::ArgMatches;
 use futures::future;
-use tokio::task::JoinHandle;
-use tokio::time::{sleep, Duration, Instant};
+use std::{env, process};
 use tokio::{signal, spawn};
 
 use crate::cli::cli;
 use crate::monitor::configure_monitors;
-use roselite_config::{Configuration, Monitor};
+use roselite_config::Configuration;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,7 +17,7 @@ async fn main() -> Result<()> {
     let configuration_file_path: String =
         env::var("CONFIGURATION_FILE_PATH").unwrap_or(String::from("conf.toml"));
 
-    let mut handles: Vec<JoinHandle<Output>> = vec![];
+    let mut handles = vec![];
     let matches = cli().get_matches();
     match matches.subcommand() {
         Some(("server", _)) => {
@@ -34,7 +27,11 @@ async fn main() -> Result<()> {
 
             // Start server
             // TODO: configure port and host
-            handles.push(spawn(roselite_server::run()));
+            handles.push(spawn(async {
+                roselite_server::run("127.0.0.1:8321".into())
+                    .await
+                    .expect("TODO: panic message");
+            }));
         }
         _ => {
             let configuration: Configuration = Configuration::from_file(&configuration_file_path)?;
