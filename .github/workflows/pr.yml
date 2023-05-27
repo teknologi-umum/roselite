@@ -7,13 +7,13 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    container: rust:1-bullseye
     timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
       - name: TruffleHog OSS
         uses: trufflesecurity/trufflehog@main
         with:
@@ -21,29 +21,36 @@ jobs:
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
           extra_args: --debug --only-verified
-      - name: Setup grcov
-        run: cargo install grcov
-      - name: Build
-        run: cargo build
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+
+      - name: Formatting check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Lint check
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
+
+      - name: Run test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features --no-fail-fast
         env:
-          RUSTFLAGS: "-Cinstrument-coverage -Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
-          RUSTC_BOOTSTRAP: "1"
-          CARGO_INCREMENTAL: "0"
-          RUSTDOCFLAGS: "-Cpanic=abort"
-      - name: Test
-        run: cargo test
-        env:
-          RUSTFLAGS: "-Cinstrument-coverage -Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
-          RUSTC_BOOTSTRAP: "1"
-          CARGO_INCREMENTAL: "0"
-          RUSTDOCFLAGS: "-Cpanic=abort"
-          LLVM_PROFILE_FILE: "your_name-%p-%m.profraw"
+          CARGO_INCREMENTAL: '0'
+          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
+          RUSTDOCFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
+
       - name: Generate coverage
-        run: grcov . -s . --binary-path ./target/debug/ -t lcov --branch --ignore-not-existing -o ./target/debug/coverage/
-        env:
-          RUSTFLAGS: "-Cinstrument-coverage -Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
-          RUSTC_BOOTSTRAP: "1"
-          CARGO_INCREMENTAL: "0"
-          RUSTDOCFLAGS: "-Cpanic=abort"
-          LLVM_PROFILE_FILE: "your_name-%p-%m.profraw"
+        uses: actions-rs/grcov@v0.1
+
       - uses: codecov/codecov-action@v3
