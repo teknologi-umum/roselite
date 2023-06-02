@@ -2,6 +2,7 @@
 
 members = [
     "roselite",
+    "roselite-common",
     "roselite-config",
     "roselite-request",
     "roselite-server",

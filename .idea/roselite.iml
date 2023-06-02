@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/roselite-request/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/roselite-server/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/roselite/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/roselite-common/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

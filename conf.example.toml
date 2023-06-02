@@ -1,3 +1,13 @@
+[error_reporting]
+# Leave this empty or commented to disable Sentry
+sentry_dsn = ""
+
+[server]
+listen_address = "127.0.0.1:8321"
+# If you want to allow the server-mode roselite to be a relay to another Uptime Kuma instance,
+# uncomment this and set a correct URL.
+# upstream_kuma = "https://upstream-kuma.com"
+
 [[monitors]]
 push_url = "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
 monitor_url = "https://github.com/healthz"

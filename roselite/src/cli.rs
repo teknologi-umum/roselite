@@ -1,11 +1,12 @@
-use clap::Command;
+use clap::{arg, Command};
 
 pub fn cli() -> Command {
     Command::new("roselite")
         .about("Active relay for Uptime Kuma's push monitor type")
         .subcommand_required(false)
         .allow_external_subcommands(true)
-        .arg_required_else_help(true)
+        .arg_required_else_help(false)
+        .arg(arg!(-c --config <FILE> "Path to Roselite configuration file").required(false))
         .subcommand(
             Command::new("agent")
                 .about("Start Roselite in agent mode, it will not expose any HTTP port")

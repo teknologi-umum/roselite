@@ -10,8 +10,10 @@ pub fn configure_monitors(monitors: Vec<Monitor>) -> Vec<JoinHandle<()>> {
 
     for monitor in monitors {
         println!("Starting monitor for {}", monitor.monitor_url);
+
         handles.push(spawn(async move {
             let cloned_monitor: Monitor = monitor.clone();
+
             loop {
                 let current_time = Instant::now();
                 if let Err(err) = perform_task(monitor.clone()).await {

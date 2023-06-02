@@ -71,6 +71,9 @@ name = "anyhow"
 version = "1.0.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
+dependencies = [
+ "backtrace",
+]
 
 [[package]]
 name = "async-trait"
@@ -1152,6 +1155,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "roselite-common"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "roselite-config"
 version = "0.1.0"
 dependencies = [
@@ -1168,6 +1178,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "reqwest",
+ "roselite-common",
  "roselite-config",
  "tokio",
 ]
@@ -1178,6 +1189,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "reqwest",
+ "roselite-common",
+ "roselite-request",
+ "sentry",
+ "serde",
  "tokio",
 ]
 
@@ -1275,6 +1291,7 @@ dependencies = [
  "httpdate",
  "native-tls",
  "reqwest",
+ "sentry-anyhow",
  "sentry-backtrace",
  "sentry-contexts",
  "sentry-core",
@@ -1283,6 +1300,17 @@ dependencies = [
  "sentry-tracing",
  "tokio",
  "ureq",
+]
+
+[[package]]
+name = "sentry-anyhow"
+version = "0.31.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4df1501f58a7821af9d3bd11435d1c0c74121a6e6931f7615592fdfa85a5fb84"
+dependencies = [
+ "anyhow",
+ "sentry-backtrace",
+ "sentry-core",
 ]
 
 [[package]]

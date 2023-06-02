@@ -4,13 +4,11 @@ use anyhow::Result;
 use reqwest::{Client, Method, StatusCode, Url};
 use tokio::time::Instant;
 
+use roselite_common::heartbeat::{Heartbeat, HeartbeatStatus};
 use roselite_config::Monitor;
 
-/// perform_task calls the monitor endpoint to create a heartbeat that will be sent to the
-/// push endpoint.
-pub async fn perform_task(monitor: Monitor) -> Result<()> {
+pub async fn call_monitor_endpoint(monitor: Monitor) -> Result<Heartbeat> {
     let monitor_client = Client::builder().user_agent("Roselite/1.0").build()?;
-    let push_client = Client::builder().user_agent("Roselite/1.0").build()?;
 
     let current_instant = Instant::now();
     let response = monitor_client
@@ -28,12 +26,26 @@ pub async fn perform_task(monitor: Monitor) -> Result<()> {
         ok = false;
     }
 
-    let mut push_url = Url::parse(monitor.push_url.as_str())?;
+    Ok(Heartbeat {
+        msg: "OK".to_string(),
+        status: if ok {
+            HeartbeatStatus::Up
+        } else {
+            HeartbeatStatus::Down
+        },
+        ping: elapsed.as_millis(),
+    })
+}
+
+pub async fn call_kuma_endpoint(upstream_url: String, heartbeat: Heartbeat) -> Result<()> {
+    let push_client = Client::builder().user_agent("Roselite/1.0").build()?;
+
+    let mut push_url = Url::parse(upstream_url.as_str())?;
     push_url
         .query_pairs_mut()
-        .append_pair("msg", "OK")
-        .append_pair("status", if ok { "up" } else { "down" })
-        .append_pair("ping", elapsed.as_millis().to_string().as_str());
+        .append_pair("msg", heartbeat.msg.as_str())
+        .append_pair("status", heartbeat.status.to_string().as_str())
+        .append_pair("ping", heartbeat.ping.to_string().as_str());
 
     match push_client
         .request(Method::GET, push_url)
@@ -52,7 +64,7 @@ pub async fn perform_task(monitor: Monitor) -> Result<()> {
                 }
                 return Ok(());
             }
-            println!("Successfully sent event to remote push url");
+            println!("Successfully sent an event to remote push url");
             Ok(())
         }
         Err(err) => {
@@ -65,4 +77,14 @@ pub async fn perform_task(monitor: Monitor) -> Result<()> {
     }?;
 
     Ok(())
+}
+
+/// It calls the monitor endpoint to create a heartbeat that will be sent to the
+/// push endpoint.
+pub async fn perform_task(monitor: Monitor) -> Result<Heartbeat> {
+    let heartbeat = call_monitor_endpoint(monitor.clone()).await?;
+
+    call_kuma_endpoint(monitor.clone().push_url, heartbeat.clone()).await?;
+
+    Ok(heartbeat)
 }

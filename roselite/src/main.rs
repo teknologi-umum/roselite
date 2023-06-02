@@ -8,33 +8,58 @@ use tokio::{signal, spawn};
 use crate::cli::cli;
 use crate::monitor::configure_monitors;
 use roselite_config::Configuration;
+use roselite_server::config::ServerConfig;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let sentry_dsn: String = env::var("SENTRY_DSN").unwrap_or(String::from(""));
+    let matches = cli().get_matches();
+
+    // There are 3 ways to set a configuration file path:
+    //   - `CONFIGURATION_FILE_PATH` environment variable
+    //   - `-c` or `--config` CLI arguments
+    //   - by a default value of `conf.toml`.
+    let mut configuration_file_path: String =
+        env::var("CONFIGURATION_FILE_PATH").unwrap_or(String::from("conf.toml"));
+    if let Some(conf) = matches.get_one::<String>("config") {
+        configuration_file_path = conf.to_string();
+    }
+
+    let configuration: Configuration = Configuration::from_file(&configuration_file_path)?;
+
+    // Configure Sentry as default error monitoring
+    let sentry_dsn: String =
+        env::var("SENTRY_DSN").unwrap_or(match configuration.error_reporting {
+            Some(error_reporting) => error_reporting.sentry_dsn,
+            None => String::new(),
+        });
     let _guard = sentry::init(sentry_dsn);
 
-    let configuration_file_path: String =
-        env::var("CONFIGURATION_FILE_PATH").unwrap_or(String::from("conf.toml"));
-
     let mut handles = vec![];
-    let matches = cli().get_matches();
+
     match matches.subcommand() {
         Some(("server", _)) => {
-            let configuration: Configuration = Configuration::from_file(&configuration_file_path)?;
             let monitor_handles = configure_monitors(configuration.monitors);
             handles.extend(monitor_handles);
 
-            // Start server
-            // TODO: configure port and host
-            handles.push(spawn(async {
-                roselite_server::run("127.0.0.1:8321".into())
+            if let Some(server) = configuration.server {
+                handles.push(spawn(async {
+                    // Start server
+                    println!("HTTP server is starting at {}", server.listen_address);
+                    roselite_server::run(ServerConfig {
+                        address: server.listen_address,
+                        // TODO: upstream support soon
+                        upstream_kuma: server.upstream_kuma,
+                    })
                     .await
-                    .expect("TODO: panic message");
-            }));
+                    .unwrap()
+                }));
+            } else {
+                // If configuration.server is None, we can't continue do anything
+                eprintln!("configuration.server must be filled, either way, don't run it on 'server' mode");
+                process::exit(10);
+            }
         }
         _ => {
-            let configuration: Configuration = Configuration::from_file(&configuration_file_path)?;
             let monitor_handles = configure_monitors(configuration.monitors);
             handles.extend(monitor_handles);
         }

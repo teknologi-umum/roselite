@@ -14,9 +14,22 @@ pub struct Monitor {
     pub request_headers: Option<BTreeMap<String, String>>,
 }
 
+#[derive(Deserialize, Clone)]
+pub struct ErrorReporting {
+    pub sentry_dsn: String,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct ServerConfig {
+    pub listen_address: String,
+    pub upstream_kuma: Option<String>,
+}
+
 /// Configuration sets a global configuration for the application.
 #[derive(Deserialize, Clone)]
 pub struct Configuration {
+    pub error_reporting: Option<ErrorReporting>,
+    pub server: Option<ServerConfig>,
     pub monitors: Vec<Monitor>,
 }
 
@@ -65,6 +78,10 @@ impl Configuration {
 #[cfg(test)]
 mod tests {
     use crate::Configuration;
+    use anyhow::Result;
+    use std::env::temp_dir;
+    use std::fs::File;
+    use std::io::Write;
 
     #[test]
     fn parse_toml_configuration() {
@@ -123,5 +140,51 @@ monitor_url = "https://github.com/healthz""#;
                 "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
             );
         }
+    }
+
+    #[test]
+    fn parse_file() -> Result<()> {
+        let temporary_directory = temp_dir();
+        let temporary_file_path = temporary_directory.join("roselite-config.toml");
+        let clone_temp_path = temporary_file_path.clone();
+        let mut file = File::create(temporary_file_path)?;
+        let configuration = r#"[error_reporting]
+sentry_dsn = "https://sentry.io"
+
+[server]
+listen_address = "127.0.0.1:8321"
+
+[[monitors]]
+push_url = "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
+monitor_url = "https://github.com/healthz""#;
+        let _ = file.write(configuration.as_bytes())?;
+        file.flush()?;
+
+        let path_str = match clone_temp_path.to_str() {
+            Some(value) => String::from(value),
+            None => String::new(),
+        };
+        let parsed_configuration = Configuration::from_file(&path_str)?;
+
+        assert!(parsed_configuration.server.is_some());
+        if let Some(server) = parsed_configuration.server {
+            assert_eq!(server.listen_address, "127.0.0.1:8321");
+        }
+
+        assert!(parsed_configuration.error_reporting.is_some());
+        if let Some(error_reporting) = parsed_configuration.error_reporting {
+            assert_eq!(error_reporting.sentry_dsn, "https://sentry.io");
+        }
+
+        assert_eq!(parsed_configuration.monitors.len(), 1);
+        if let Some(first_monitor) = parsed_configuration.monitors.first() {
+            assert_eq!(first_monitor.monitor_url, "https://github.com/healthz");
+            assert_eq!(
+                first_monitor.push_url,
+                "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
+            );
+        }
+
+        Ok(())
     }
 }
