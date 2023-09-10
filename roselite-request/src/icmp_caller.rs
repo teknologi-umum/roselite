@@ -1,13 +1,16 @@
-use crate::RequestCaller;
+use std::time::Duration;
+
 use anyhow::Error;
+use async_trait::async_trait;
+use fastping_rs::Pinger;
 use fastping_rs::PingResult::{Idle, Receive};
-use fastping_rs::{Pinger};
+
 use roselite_common::heartbeat::{Heartbeat, HeartbeatStatus};
 use roselite_config::Monitor;
-use std::time::Duration;
-use async_trait::async_trait;
 
-#[derive(Debug)]
+use crate::RequestCaller;
+
+#[derive(Debug, Clone)]
 pub struct IcmpCaller {}
 
 impl IcmpCaller {
@@ -23,9 +26,12 @@ impl RequestCaller for IcmpCaller {
         let parent_span = sentry::configure_scope(|scope| scope.get_span());
 
         let span: sentry::TransactionOrSpan = match &parent_span {
-            Some(parent) => parent.start_child("icmp_caller.call", "Call target ICMP request").into(),
+            Some(parent) => parent
+                .start_child("icmp_caller.call", "Call target ICMP request")
+                .into(),
             None => {
-                let ctx = sentry::TransactionContext::new("Call target ICMP request", "icmp_caller.call");
+                let ctx =
+                    sentry::TransactionContext::new("Call target ICMP request", "icmp_caller.call");
                 sentry::start_transaction(ctx).into()
             }
         };
@@ -40,7 +46,7 @@ impl RequestCaller for IcmpCaller {
         for _ in 0..4 {
             match results.recv() {
                 Ok(result) => match result {
-                    Idle { addr: _addr }  => {
+                    Idle { addr: _addr } => {
                         ok = false;
                     }
                     Receive { addr: _addr, rtt } => {

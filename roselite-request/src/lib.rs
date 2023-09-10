@@ -1,7 +1,3 @@
-pub mod http_caller;
-pub mod icmp_caller;
-mod bonk_caller;
-
 use std::time::Duration;
 
 use anyhow::Result;
@@ -10,19 +6,33 @@ use reqwest::{Client, Method, StatusCode, Url};
 
 use roselite_common::heartbeat::Heartbeat;
 use roselite_config::{Monitor, MonitorType};
+
 use crate::bonk_caller::BonkCaller;
 use crate::http_caller::HttpCaller;
 use crate::icmp_caller::IcmpCaller;
 
+mod bonk_caller;
+pub mod http_caller;
+pub mod icmp_caller;
+
 #[async_trait]
-pub trait RequestCaller: 'static {
+pub trait RequestCaller: Send + Sync {
     async fn call(&self, monitor: Monitor) -> Result<Heartbeat>;
 }
 
+// #[async_trait]
+// pub trait KumaCaller {
+//     async fn call_kuma_endpoint(&self, upstream_url: String, heartbeat: Heartbeat) -> Result<()>;
+// }
+
 pub struct RoseliteRequest {
-    http_caller: Box<(dyn RequestCaller)>,
-    icmp_caller: Box<(dyn RequestCaller)>,
+    http_caller: Box<dyn RequestCaller>,
+    icmp_caller: Box<dyn RequestCaller>,
 }
+
+unsafe impl Send for RoseliteRequest {}
+
+unsafe impl Sync for RoseliteRequest {}
 
 impl RoseliteRequest {
     pub fn new(http_caller: Box<HttpCaller>, icmp_caller: Box<IcmpCaller>) -> Self {
@@ -36,17 +46,29 @@ impl RoseliteRequest {
         return RoseliteRequest {
             http_caller: Box::new(BonkCaller::new()),
             icmp_caller: Box::new(BonkCaller::new()),
-        }
+        };
     }
 
-    pub async fn call_kuma_endpoint(&self, upstream_url: String, heartbeat: Heartbeat) -> Result<()> {
+    pub async fn call_kuma_endpoint(
+        &self,
+        upstream_url: String,
+        heartbeat: Heartbeat,
+    ) -> Result<()> {
         // Retrieve the currently running span
         let parent_span = sentry::configure_scope(|scope| scope.get_span());
 
         let span: sentry::TransactionOrSpan = match &parent_span {
-            Some(parent) => parent.start_child("request.call_kuma_endpoint", "Call upstream Uptime Kuma endpoint").into(),
+            Some(parent) => parent
+                .start_child(
+                    "request.call_kuma_endpoint",
+                    "Call upstream Uptime Kuma endpoint",
+                )
+                .into(),
             None => {
-                let ctx = sentry::TransactionContext::new("Call upstream Uptime Kuma endpoint", "request.call_kuma_endpoint");
+                let ctx = sentry::TransactionContext::new(
+                    "Call upstream Uptime Kuma endpoint",
+                    "request.call_kuma_endpoint",
+                );
                 sentry::start_transaction(ctx).into()
             }
         };
@@ -101,9 +123,12 @@ impl RoseliteRequest {
         let parent_span = sentry::configure_scope(|scope| scope.get_span());
 
         let span: sentry::TransactionOrSpan = match &parent_span {
-            Some(parent) => parent.start_child("request.perform_task", "Perform request task").into(),
+            Some(parent) => parent
+                .start_child("request.perform_task", "Perform request task")
+                .into(),
             None => {
-                let ctx = sentry::TransactionContext::new("Perform request task", "request.perform_task");
+                let ctx =
+                    sentry::TransactionContext::new("Perform request task", "request.perform_task");
                 sentry::start_transaction(ctx).into()
             }
         };
@@ -121,3 +146,8 @@ impl RoseliteRequest {
         Ok(heartbeat)
     }
 }
+
+// #[async_trait]
+// impl KumaCaller for RoseliteRequest {
+//
+// }

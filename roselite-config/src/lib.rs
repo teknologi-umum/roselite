@@ -99,11 +99,13 @@ impl Configuration {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Configuration, MonitorType};
-    use anyhow::Result;
     use std::env::temp_dir;
     use std::fs::File;
     use std::io::Write;
+
+    use anyhow::Result;
+
+    use crate::{Configuration, MonitorType};
 
     #[test]
     fn parse_toml_configuration() {

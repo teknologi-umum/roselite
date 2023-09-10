@@ -8,8 +8,8 @@ pub enum HeartbeatStatus {
 
 impl Serialize for HeartbeatStatus {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         serializer.serialize_str(match self {
             HeartbeatStatus::Up => "up",

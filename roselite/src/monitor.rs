@@ -1,19 +1,23 @@
+use std::ops::Deref;
+use std::sync::Arc;
+use std::time::Duration;
+
+use sentry::integrations::anyhow::capture_anyhow;
+use tokio::spawn;
+use tokio::task::JoinHandle;
+use tokio::time::{Instant, sleep};
+
 use roselite_config::Monitor;
 use roselite_request::http_caller::HttpCaller;
 use roselite_request::icmp_caller::IcmpCaller;
-use roselite_request::{RoseliteRequest};
-use std::time::Duration;
-use tokio::spawn;
-use tokio::task::JoinHandle;
-use tokio::time::{sleep, Instant};
+use roselite_request::RoseliteRequest;
 
 pub fn configure_monitors(monitors: Vec<Monitor>) -> Vec<JoinHandle<()>> {
     let mut handles: Vec<JoinHandle<()>> = vec![];
 
     // Build dependency for http_caller and icmp_caller
-    let http_caller = Box::new(HttpCaller::new());
-    let icmp_caller = Box::new(IcmpCaller::new());
-    let request = RoseliteRequest::new(http_caller, icmp_caller);
+    let http_caller = Arc::new(HttpCaller::new());
+    let icmp_caller = Arc::new(IcmpCaller::new());
 
     // Start the monitors
     for monitor in monitors {
@@ -21,6 +25,10 @@ pub fn configure_monitors(monitors: Vec<Monitor>) -> Vec<JoinHandle<()>> {
 
         handles.push(spawn(async move {
             let cloned_monitor: Monitor = monitor.clone();
+            let cloned_http_caller = http_caller.clone();
+            let deref_http_caller = cloned_http_caller.deref();
+            let cloned_icmp_caller = icmp_caller.clone();
+            let deref_icmp_caller = cloned_icmp_caller.deref();
 
             loop {
                 let tx_ctx = sentry::TransactionContext::new(
@@ -30,12 +38,13 @@ pub fn configure_monitors(monitors: Vec<Monitor>) -> Vec<JoinHandle<()>> {
                 let transaction = sentry::start_transaction(tx_ctx);
 
                 // Bind the transaction / span to the scope:
-                sentry::configure_scope(|scope| scope.set_span(Some(transaction.into())));
+                sentry::configure_scope(|scope| scope.set_span(Some(transaction.clone().into())));
 
+                let request = RoseliteRequest::new(Box::new(deref_http_caller.clone()), Box::new(deref_icmp_caller.clone()));
                 let current_time = Instant::now();
                 if let Err(err) = request.perform_task(monitor.clone()).await {
                     // Do nothing of this error
-                    sentry::capture_error(&err);
+                    capture_anyhow(&err);
                     eprintln!("Unexpected error during performing task: {}", err);
                 }
 

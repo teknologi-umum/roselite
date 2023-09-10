@@ -1,13 +1,16 @@
-use crate::RequestCaller;
-use anyhow::Result;
-use reqwest::{Client, Method, StatusCode};
-use roselite_common::heartbeat::{Heartbeat, HeartbeatStatus};
-use roselite_config::Monitor;
 use std::time::Duration;
+
+use anyhow::Result;
 use async_trait::async_trait;
+use reqwest::{Client, Method, StatusCode};
 use tokio::time::Instant;
 
-#[derive(Debug)]
+use roselite_common::heartbeat::{Heartbeat, HeartbeatStatus};
+use roselite_config::Monitor;
+
+use crate::RequestCaller;
+
+#[derive(Clone)]
 pub struct HttpCaller {
     client: Client,
 }
@@ -15,7 +18,10 @@ pub struct HttpCaller {
 impl HttpCaller {
     pub fn new() -> Self {
         return HttpCaller {
-            client: Client::builder().user_agent("Roselite/1.0").build().unwrap(),
+            client: Client::builder()
+                .user_agent("Roselite/1.0")
+                .build()
+                .unwrap(),
         };
     }
 }
@@ -27,9 +33,12 @@ impl RequestCaller for HttpCaller {
         let parent_span = sentry::configure_scope(|scope| scope.get_span());
 
         let span: sentry::TransactionOrSpan = match &parent_span {
-            Some(parent) => parent.start_child("http_caller.call", "Call target HTTP request").into(),
+            Some(parent) => parent
+                .start_child("http_caller.call", "Call target HTTP request")
+                .into(),
             None => {
-                let ctx = sentry::TransactionContext::new("Call target HTTP request", "http_caller.call");
+                let ctx =
+                    sentry::TransactionContext::new("Call target HTTP request", "http_caller.call");
                 sentry::start_transaction(ctx).into()
             }
         };

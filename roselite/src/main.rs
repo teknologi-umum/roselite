@@ -1,15 +1,17 @@
-mod cli;
-mod monitor;
+use std::{env, process};
+
 use anyhow::Result;
 use futures::future;
-use std::{env, process};
 use tokio::{signal, spawn};
-use tracing_subscriber::prelude::*;
+
+use roselite_config::Configuration;
+use roselite_server::config::ServerConfig;
 
 use crate::cli::cli;
 use crate::monitor::configure_monitors;
-use roselite_config::Configuration;
-use roselite_server::config::ServerConfig;
+
+mod cli;
+mod monitor;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -38,15 +40,15 @@ async fn main() -> Result<()> {
         sentry::ClientOptions {
             environment: Some(
                 env::var("ENVIRONMENT")
-                    .unwrap_or("production".into())
+                    .unwrap_or("production".to_string())
                     .into(),
             ),
             sample_rate: env::var("SENTRY_SAMPLE_RATE")
-                .unwrap_or("1.0".into())
-                .into(),
+                .unwrap_or("1.0".to_string())
+                .parse::<f32>().unwrap_or(1.0),
             traces_sample_rate: env::var("SENTRY_TRACES_SAMPLE_RATE")
-                .unwrap_or("0.2".into())
-                .into(),
+                .unwrap_or("0.2".to_string())
+                .parse::<f32>().unwrap_or(0.2),
             attach_stacktrace: true,
             ..Default::default()
         },
@@ -68,8 +70,8 @@ async fn main() -> Result<()> {
                         // TODO: upstream support soon
                         upstream_kuma: server.upstream_kuma,
                     })
-                    .await
-                    .unwrap()
+                        .await
+                        .unwrap()
                 }));
             } else {
                 // If configuration.server is None, we can't continue do anything
