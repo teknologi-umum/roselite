@@ -1,90 +1,123 @@
+pub mod http_caller;
+pub mod icmp_caller;
+mod bonk_caller;
+
 use std::time::Duration;
 
 use anyhow::Result;
+use async_trait::async_trait;
 use reqwest::{Client, Method, StatusCode, Url};
-use tokio::time::Instant;
 
-use roselite_common::heartbeat::{Heartbeat, HeartbeatStatus};
-use roselite_config::Monitor;
+use roselite_common::heartbeat::Heartbeat;
+use roselite_config::{Monitor, MonitorType};
+use crate::bonk_caller::BonkCaller;
+use crate::http_caller::HttpCaller;
+use crate::icmp_caller::IcmpCaller;
 
-pub async fn call_monitor_endpoint(monitor: Monitor) -> Result<Heartbeat> {
-    let monitor_client = Client::builder().user_agent("Roselite/1.0").build()?;
+#[async_trait]
+pub trait RequestCaller: 'static {
+    async fn call(&self, monitor: Monitor) -> Result<Heartbeat>;
+}
 
-    let current_instant = Instant::now();
-    let response = monitor_client
-        .request(Method::GET, monitor.monitor_url.as_str())
-        .timeout(Duration::from_secs(30))
-        .send()
-        .await?;
+pub struct RoseliteRequest {
+    http_caller: Box<(dyn RequestCaller)>,
+    icmp_caller: Box<(dyn RequestCaller)>,
+}
 
-    let elapsed: Duration = current_instant.elapsed();
-
-    let status_code: StatusCode = response.status();
-    let mut ok = true;
-    // everything from 2xx-3xx is considered ok
-    if status_code >= StatusCode::BAD_REQUEST {
-        ok = false;
+impl RoseliteRequest {
+    pub fn new(http_caller: Box<HttpCaller>, icmp_caller: Box<IcmpCaller>) -> Self {
+        return RoseliteRequest {
+            http_caller,
+            icmp_caller,
+        };
     }
 
-    Ok(Heartbeat {
-        msg: "OK".to_string(),
-        status: if ok {
-            HeartbeatStatus::Up
-        } else {
-            HeartbeatStatus::Down
-        },
-        ping: elapsed.as_millis(),
-    })
-}
+    pub fn default() -> Self {
+        return RoseliteRequest {
+            http_caller: Box::new(BonkCaller::new()),
+            icmp_caller: Box::new(BonkCaller::new()),
+        }
+    }
 
-pub async fn call_kuma_endpoint(upstream_url: String, heartbeat: Heartbeat) -> Result<()> {
-    let push_client = Client::builder().user_agent("Roselite/1.0").build()?;
+    pub async fn call_kuma_endpoint(&self, upstream_url: String, heartbeat: Heartbeat) -> Result<()> {
+        // Retrieve the currently running span
+        let parent_span = sentry::configure_scope(|scope| scope.get_span());
 
-    let mut push_url = Url::parse(upstream_url.as_str())?;
-    push_url
-        .query_pairs_mut()
-        .append_pair("msg", heartbeat.msg.as_str())
-        .append_pair("status", heartbeat.status.to_string().as_str())
-        .append_pair("ping", heartbeat.ping.to_string().as_str());
-
-    match push_client
-        .request(Method::GET, push_url)
-        .timeout(Duration::from_secs(60))
-        .send()
-        .await
-    {
-        Ok(response) => {
-            if response.status() >= StatusCode::BAD_REQUEST {
-                println!(
-                    "Received response status of {} during sending event to remote push url",
-                    response.status()
-                );
-                if let Ok(body) = response.text().await {
-                    println!("Response body: {}", body)
-                }
-                return Ok(());
+        let span: sentry::TransactionOrSpan = match &parent_span {
+            Some(parent) => parent.start_child("request.call_kuma_endpoint", "Call upstream Uptime Kuma endpoint").into(),
+            None => {
+                let ctx = sentry::TransactionContext::new("Call upstream Uptime Kuma endpoint", "request.call_kuma_endpoint");
+                sentry::start_transaction(ctx).into()
             }
-            println!("Successfully sent an event to remote push url");
-            Ok(())
-        }
-        Err(err) => {
-            println!(
-                "An error occurred during sending event to remote push url: {}",
-                err
-            );
-            Err(err)
-        }
-    }?;
+        };
 
-    Ok(())
-}
+        let push_client = Client::builder().user_agent("Roselite/1.0").build()?;
 
-/// It calls the monitor endpoint to create a heartbeat that will be sent to the
-/// push endpoint.
-pub async fn perform_task(monitor: Monitor) -> Result<Heartbeat> {
-    let heartbeat = call_monitor_endpoint(monitor.clone()).await?;
+        let mut push_url = Url::parse(upstream_url.as_str())?;
+        push_url
+            .query_pairs_mut()
+            .append_pair("msg", heartbeat.msg.as_str())
+            .append_pair("status", heartbeat.status.to_string().as_str())
+            .append_pair("ping", heartbeat.ping.to_string().as_str());
 
-    call_kuma_endpoint(monitor.clone().push_url, heartbeat.clone()).await?;
+        match push_client
+            .request(Method::GET, push_url)
+            .timeout(Duration::from_secs(60))
+            .send()
+            .await
+        {
+            Ok(response) => {
+                if response.status() >= StatusCode::BAD_REQUEST {
+                    println!(
+                        "Received response status of {} during sending event to remote push url",
+                        response.status()
+                    );
+                    if let Ok(body) = response.text().await {
+                        println!("Response body: {}", body)
+                    }
+                    return Ok(());
+                }
+                println!("Successfully sent an event to remote push url");
+                Ok(())
+            }
+            Err(err) => {
+                println!(
+                    "An error occurred during sending event to remote push url: {}",
+                    err
+                );
+                span.clone().finish();
+                Err(err)
+            }
+        }?;
 
-    Ok(heartbeat)
+        span.finish();
+        Ok(())
+    }
+
+    /// It calls the monitor endpoint to create a heartbeat that will be sent to the
+    /// push endpoint.
+    pub async fn perform_task(&self, monitor: Monitor) -> Result<Heartbeat> {
+        // Retrieve the currently running span
+        let parent_span = sentry::configure_scope(|scope| scope.get_span());
+
+        let span: sentry::TransactionOrSpan = match &parent_span {
+            Some(parent) => parent.start_child("request.perform_task", "Perform request task").into(),
+            None => {
+                let ctx = sentry::TransactionContext::new("Perform request task", "request.perform_task");
+                sentry::start_transaction(ctx).into()
+            }
+        };
+
+        let heartbeat = match monitor.monitor_type {
+            MonitorType::HTTP => self.http_caller.call(monitor.clone()).await?,
+            MonitorType::ICMP => self.icmp_caller.call(monitor.clone()).await?,
+        };
+
+        self.call_kuma_endpoint(monitor.clone().push_url, heartbeat.clone())
+            .await?;
+
+        span.finish();
+
+        Ok(heartbeat)
+    }
 }

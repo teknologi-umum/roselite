@@ -16,4 +16,4 @@ pub trait ServerOptions {
     fn get_upstream_kuma(&self) -> Option<String>;
 }
 
-pub type DynServerConfig = Arc<dyn ServerOptions + Send + Sync>;
+pub type DynServerConfig = Arc<dyn ServerOptions + Send + Sync + 'static>;

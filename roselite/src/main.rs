@@ -4,6 +4,7 @@ use anyhow::Result;
 use futures::future;
 use std::{env, process};
 use tokio::{signal, spawn};
+use tracing_subscriber::prelude::*;
 
 use crate::cli::cli;
 use crate::monitor::configure_monitors;
@@ -32,7 +33,24 @@ async fn main() -> Result<()> {
             Some(error_reporting) => error_reporting.sentry_dsn,
             None => String::new(),
         });
-    let _guard = sentry::init(sentry_dsn);
+    let _guard = sentry::init((
+        sentry_dsn,
+        sentry::ClientOptions {
+            environment: Some(
+                env::var("ENVIRONMENT")
+                    .unwrap_or("production".into())
+                    .into(),
+            ),
+            sample_rate: env::var("SENTRY_SAMPLE_RATE")
+                .unwrap_or("1.0".into())
+                .into(),
+            traces_sample_rate: env::var("SENTRY_TRACES_SAMPLE_RATE")
+                .unwrap_or("0.2".into())
+                .into(),
+            attach_stacktrace: true,
+            ..Default::default()
+        },
+    ));
 
     let mut handles = vec![];
 
@@ -71,6 +89,7 @@ async fn main() -> Result<()> {
             process::exit(0);
         }
         Err(err) => {
+            sentry::capture_error(&err);
             eprintln!("Unable to listen for shutdown signal: {}", err);
         }
     }

@@ -5,10 +5,10 @@ use axum::http::StatusCode;
 use axum::Json;
 use reqwest::Url;
 use roselite_common::heartbeat::Heartbeat;
-use roselite_request::call_kuma_endpoint;
 use sentry::integrations::anyhow::capture_anyhow;
 use sentry::{capture_message, Level};
 use serde::{Deserialize, Serialize};
+use roselite_request::RoseliteRequest;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct RemoteWriteResponse {
@@ -23,7 +23,7 @@ pub async fn remote_write(
     let upstream_kuma = server_config.get_upstream_kuma();
     if let Some(upstream_url) = upstream_kuma {
         match convert_to_upstream(upstream_url, id) {
-            Ok(push_url) => match call_kuma_endpoint(push_url, params).await {
+            Ok(push_url) => match RoseliteRequest::default().call_kuma_endpoint(push_url, params).await {
                 Ok(_) => (StatusCode::OK, Json(RemoteWriteResponse { ok: true })),
                 Err(error) => {
                     capture_anyhow(&error);

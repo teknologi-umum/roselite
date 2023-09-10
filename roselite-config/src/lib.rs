@@ -1,32 +1,54 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
+use std::str::FromStr;
 
 use anyhow::{Error, Result};
 use serde::Deserialize;
 
-/// Monitor defines a single monitor configuration
-#[derive(Deserialize, Clone)]
-pub struct Monitor {
-    pub push_url: String,
-    pub monitor_url: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub request_headers: Option<BTreeMap<String, String>>,
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+pub enum MonitorType {
+    HTTP,
+    ICMP,
 }
 
-#[derive(Deserialize, Clone)]
+impl FromStr for MonitorType {
+    type Err = ();
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            "HTTP" => Ok(MonitorType::HTTP),
+            "ICMP" => Ok(MonitorType::ICMP),
+            _ => Err(()),
+        }
+    }
+}
+
+/// Monitor defines a single monitor configuration
+#[derive(Deserialize, Clone, Debug)]
+pub struct Monitor {
+    pub monitor_type: MonitorType,
+    pub push_url: String,
+    pub monitor_target: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub request_headers: Option<BTreeMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skip_tls_verify: Option<bool>,
+}
+
+#[derive(Deserialize, Clone, Debug)]
 pub struct ErrorReporting {
     pub sentry_dsn: String,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ServerConfig {
     pub listen_address: String,
     pub upstream_kuma: Option<String>,
 }
 
 /// Configuration sets a global configuration for the application.
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Configuration {
     pub error_reporting: Option<ErrorReporting>,
     pub server: Option<ServerConfig>,
@@ -77,7 +99,7 @@ impl Configuration {
 
 #[cfg(test)]
 mod tests {
-    use crate::Configuration;
+    use crate::{Configuration, MonitorType};
     use anyhow::Result;
     use std::env::temp_dir;
     use std::fs::File;
@@ -86,14 +108,16 @@ mod tests {
     #[test]
     fn parse_toml_configuration() {
         let configuration = r#"[[monitors]]
+monitor_type = "HTTP"
 push_url = "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
-monitor_url = "https://github.com/healthz""#;
+monitor_target = "https://github.com/healthz""#;
 
         let parsed_configuration = Configuration::from_toml(configuration);
 
         assert_eq!(parsed_configuration.monitors.len(), 1);
         if let Some(first_monitor) = parsed_configuration.monitors.first() {
-            assert_eq!(first_monitor.monitor_url, "https://github.com/healthz");
+            assert_eq!(first_monitor.monitor_type, MonitorType::HTTP);
+            assert_eq!(first_monitor.monitor_target, "https://github.com/healthz");
             assert_eq!(
                 first_monitor.push_url,
                 "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
@@ -104,14 +128,16 @@ monitor_url = "https://github.com/healthz""#;
     #[test]
     fn parse_yaml_configuration() {
         let configuration = r#"monitors:
-  - push_url: "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
-    monitor_url: "https://github.com/healthz""#;
+  - monitor_type: "HTTP"
+    push_url: "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
+    monitor_target: "https://github.com/healthz""#;
 
         let parsed_configuration = Configuration::from_yaml(configuration);
 
         assert_eq!(parsed_configuration.monitors.len(), 1);
         if let Some(first_monitor) = parsed_configuration.monitors.first() {
-            assert_eq!(first_monitor.monitor_url, "https://github.com/healthz");
+            assert_eq!(first_monitor.monitor_type, MonitorType::HTTP);
+            assert_eq!(first_monitor.monitor_target, "https://github.com/healthz");
             assert_eq!(
                 first_monitor.push_url,
                 "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
@@ -124,8 +150,9 @@ monitor_url = "https://github.com/healthz""#;
         let configuration = r#"{
   "monitors": [
     {
+        "monitor_type": "HTTP",
         "push_url": "https://your-uptime-kuma.com/api/push/Eq15E23yc3",
-        "monitor_url": "https://github.com/healthz"
+        "monitor_target": "https://github.com/healthz"
     }
   ]
 }"#;
@@ -134,7 +161,8 @@ monitor_url = "https://github.com/healthz""#;
 
         assert_eq!(parsed_configuration.monitors.len(), 1);
         if let Some(first_monitor) = parsed_configuration.monitors.first() {
-            assert_eq!(first_monitor.monitor_url, "https://github.com/healthz");
+            assert_eq!(first_monitor.monitor_type, MonitorType::HTTP);
+            assert_eq!(first_monitor.monitor_target, "https://github.com/healthz");
             assert_eq!(
                 first_monitor.push_url,
                 "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
@@ -155,6 +183,7 @@ sentry_dsn = "https://sentry.io"
 listen_address = "127.0.0.1:8321"
 
 [[monitors]]
+monitor_type = "ICMP"
 push_url = "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
 monitor_url = "https://github.com/healthz""#;
         let _ = file.write(configuration.as_bytes())?;
@@ -178,7 +207,8 @@ monitor_url = "https://github.com/healthz""#;
 
         assert_eq!(parsed_configuration.monitors.len(), 1);
         if let Some(first_monitor) = parsed_configuration.monitors.first() {
-            assert_eq!(first_monitor.monitor_url, "https://github.com/healthz");
+            assert_eq!(first_monitor.monitor_type, MonitorType::ICMP);
+            assert_eq!(first_monitor.monitor_target, "https://github.com/healthz");
             assert_eq!(
                 first_monitor.push_url,
                 "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
