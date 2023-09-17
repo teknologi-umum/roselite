@@ -14,7 +14,13 @@ pub struct IcmpCaller {}
 
 impl IcmpCaller {
     pub fn new() -> Self {
-        return IcmpCaller {};
+        IcmpCaller {}
+    }
+}
+
+impl Default for IcmpCaller {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

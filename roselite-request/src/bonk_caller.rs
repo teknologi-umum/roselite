@@ -1,3 +1,4 @@
+use anyhow::Result;
 use roselite_common::heartbeat::{Heartbeat, HeartbeatStatus};
 use roselite_config::Monitor;
 
@@ -11,12 +12,18 @@ pub struct BonkCaller {}
 
 impl BonkCaller {
     pub fn new() -> Self {
-        return BonkCaller {};
+        BonkCaller {}
+    }
+}
+
+impl Default for BonkCaller {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 impl RequestCaller for BonkCaller {
-    fn call(&self, _monitor: Monitor) -> anyhow::Result<Heartbeat> {
+    fn call(&self, _monitor: Monitor) -> Result<Heartbeat> {
         Ok(Heartbeat {
             msg: "OK".to_string(),
             status: HeartbeatStatus::Up,

@@ -17,12 +17,18 @@ pub struct HttpCaller {
 
 impl HttpCaller {
     pub fn new() -> Self {
-        return HttpCaller {
+        HttpCaller {
             client: Client::builder()
                 .user_agent("Roselite/1.0")
                 .build()
                 .unwrap(),
-        };
+        }
+    }
+}
+
+impl Default for HttpCaller {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
