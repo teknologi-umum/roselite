@@ -1,5 +1,3 @@
-use async_trait::async_trait;
-
 use roselite_common::heartbeat::{Heartbeat, HeartbeatStatus};
 use roselite_config::Monitor;
 
@@ -17,9 +15,8 @@ impl BonkCaller {
     }
 }
 
-#[async_trait]
 impl RequestCaller for BonkCaller {
-    async fn call(&self, _monitor: Monitor) -> anyhow::Result<Heartbeat> {
+    fn call(&self, _monitor: Monitor) -> anyhow::Result<Heartbeat> {
         Ok(Heartbeat {
             msg: "OK".to_string(),
             status: HeartbeatStatus::Up,

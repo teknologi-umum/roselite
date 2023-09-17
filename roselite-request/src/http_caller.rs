@@ -1,8 +1,8 @@
 use std::time::Duration;
 
 use anyhow::Result;
-use async_trait::async_trait;
-use reqwest::{Client, Method, StatusCode};
+use reqwest::blocking::Client;
+use reqwest::{Method, StatusCode};
 use tokio::time::Instant;
 
 use roselite_common::heartbeat::{Heartbeat, HeartbeatStatus};
@@ -26,9 +26,8 @@ impl HttpCaller {
     }
 }
 
-#[async_trait]
 impl RequestCaller for HttpCaller {
-    async fn call(&self, monitor: Monitor) -> Result<Heartbeat> {
+    fn call(&self, monitor: Monitor) -> Result<Heartbeat> {
         // Retrieve the currently running span
         let parent_span = sentry::configure_scope(|scope| scope.get_span());
 
@@ -48,8 +47,7 @@ impl RequestCaller for HttpCaller {
             .client
             .request(Method::GET, monitor.monitor_target.as_str())
             .timeout(Duration::from_secs(30))
-            .send()
-            .await?;
+            .send()?;
 
         let elapsed: Duration = current_instant.elapsed();
 

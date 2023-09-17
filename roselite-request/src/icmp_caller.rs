@@ -1,9 +1,8 @@
 use std::time::Duration;
 
-use anyhow::Error;
-use async_trait::async_trait;
-use fastping_rs::Pinger;
+use anyhow::{Error, Result};
 use fastping_rs::PingResult::{Idle, Receive};
+use fastping_rs::Pinger;
 
 use roselite_common::heartbeat::{Heartbeat, HeartbeatStatus};
 use roselite_config::Monitor;
@@ -19,9 +18,8 @@ impl IcmpCaller {
     }
 }
 
-#[async_trait]
 impl RequestCaller for IcmpCaller {
-    async fn call(&self, monitor: Monitor) -> anyhow::Result<Heartbeat> {
+    fn call(&self, monitor: Monitor) -> Result<Heartbeat> {
         // Retrieve the currently running span
         let parent_span = sentry::configure_scope(|scope| scope.get_span());
 

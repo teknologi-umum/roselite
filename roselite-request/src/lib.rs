@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use anyhow::Result;
-use async_trait::async_trait;
 use reqwest::{Client, Method, StatusCode, Url};
 
 use roselite_common::heartbeat::Heartbeat;
@@ -15,15 +14,10 @@ mod bonk_caller;
 pub mod http_caller;
 pub mod icmp_caller;
 
-#[async_trait]
 pub trait RequestCaller: Send + Sync {
-    async fn call(&self, monitor: Monitor) -> Result<Heartbeat>;
+    fn call(&self, monitor: Monitor) -> Result<Heartbeat>;
 }
 
-// #[async_trait]
-// pub trait KumaCaller {
-//     async fn call_kuma_endpoint(&self, upstream_url: String, heartbeat: Heartbeat) -> Result<()>;
-// }
 
 pub struct RoseliteRequest {
     http_caller: Box<dyn RequestCaller>,
@@ -34,19 +28,21 @@ unsafe impl Send for RoseliteRequest {}
 
 unsafe impl Sync for RoseliteRequest {}
 
-impl RoseliteRequest {
-    pub fn new(http_caller: Box<HttpCaller>, icmp_caller: Box<IcmpCaller>) -> Self {
-        return RoseliteRequest {
-            http_caller,
-            icmp_caller,
-        };
-    }
-
-    pub fn default() -> Self {
-        return RoseliteRequest {
+impl Default for RoseliteRequest {
+    fn default() -> Self {
+        RoseliteRequest {
             http_caller: Box::new(BonkCaller::new()),
             icmp_caller: Box::new(BonkCaller::new()),
-        };
+        }
+    }
+}
+
+impl RoseliteRequest {
+    pub fn new(http_caller: Box<HttpCaller>, icmp_caller: Box<IcmpCaller>) -> Self {
+        RoseliteRequest {
+            http_caller,
+            icmp_caller,
+        }
     }
 
     pub async fn call_kuma_endpoint(
@@ -134,8 +130,8 @@ impl RoseliteRequest {
         };
 
         let heartbeat = match monitor.monitor_type {
-            MonitorType::HTTP => self.http_caller.call(monitor.clone()).await?,
-            MonitorType::ICMP => self.icmp_caller.call(monitor.clone()).await?,
+            MonitorType::HTTP => self.http_caller.call(monitor.clone())?,
+            MonitorType::ICMP => self.icmp_caller.call(monitor.clone())?,
         };
 
         self.call_kuma_endpoint(monitor.clone().push_url, heartbeat.clone())
@@ -146,8 +142,3 @@ impl RoseliteRequest {
         Ok(heartbeat)
     }
 }
-
-// #[async_trait]
-// impl KumaCaller for RoseliteRequest {
-//
-// }

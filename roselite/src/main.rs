@@ -45,10 +45,12 @@ async fn main() -> Result<()> {
             ),
             sample_rate: env::var("SENTRY_SAMPLE_RATE")
                 .unwrap_or("1.0".to_string())
-                .parse::<f32>().unwrap_or(1.0),
+                .parse::<f32>()
+                .unwrap_or(1.0),
             traces_sample_rate: env::var("SENTRY_TRACES_SAMPLE_RATE")
                 .unwrap_or("0.2".to_string())
-                .parse::<f32>().unwrap_or(0.2),
+                .parse::<f32>()
+                .unwrap_or(0.2),
             attach_stacktrace: true,
             ..Default::default()
         },
@@ -70,8 +72,8 @@ async fn main() -> Result<()> {
                         // TODO: upstream support soon
                         upstream_kuma: server.upstream_kuma,
                     })
-                        .await
-                        .unwrap()
+                    .await
+                    .unwrap()
                 }));
             } else {
                 // If configuration.server is None, we can't continue do anything

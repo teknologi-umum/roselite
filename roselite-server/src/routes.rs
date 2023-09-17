@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use axum::Router;
 use axum::routing::get;
+use axum::Router;
 
 use crate::config::ServerConfig;
 use crate::handlers::ping::ping;
