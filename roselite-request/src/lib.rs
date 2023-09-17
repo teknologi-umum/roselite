@@ -30,8 +30,8 @@ unsafe impl Sync for RoseliteRequest {}
 impl Default for RoseliteRequest {
     fn default() -> Self {
         RoseliteRequest {
-            http_caller: Box::new(BonkCaller::new()),
-            icmp_caller: Box::new(BonkCaller::new()),
+            http_caller: Box::new(HttpCaller::new()),
+            icmp_caller: Box::new(IcmpCaller::new()),
         }
     }
 }

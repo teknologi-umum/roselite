@@ -6,24 +6,39 @@ Roselite is a simple application to relay your [Uptime Kuma](https://github.com/
 ## Usage
 
 Create a file using TOML, YAML, or JSON (or JSON5) containing the configuration for Roselite. The configuration in JSON
-should looks like:
+should look like:
 
 ```json5
 {
+    // This "monitor[lib.rs](roselite-request%2Fsrc%2Flib.rs)s" block is required
     "monitors": [
         {
+            // Monitor type specifies what kind of thing you're monitoring
+            // and help the program to know what's the best way of reaching the target.
+            // Available monitor types are: "HTTP", "ICMP"
+            "monitor_type": "HTTP",
             // This is the endpoint that you can acquire from your Uptime Kuma instance
             "push_url": "https://your-uptime-kuma.com/api/push/Eq15E23yc3",
             // This is the endpoint to your private/secluded server within an internal network
-            "monitor_url": "https://your-internal-endpoint.com"
+            "monitor_target": "https://your-internal-end[lib.rs](roselite-config%2Fsrc%2Flib.rs)point.com"
         },
         // ...
-    ]
+    ],
+    // This "error_reporting" block is optional. It's useful to have it when you have Sentry
+    // on your environment. So you can report bugs to us.
+    "error_reporting": {
+        "sentry_dsn": "https://***@ingest.sentry.io/***"
+    },
+    // This "server" block is only required if you start the Roselite as a server, not as agent.
+    "server": {
+        "listen_address": "127.0.0.1:8321"
+    }
 }
 ```
 
 Put the path to the configuration file on `CONFIGURATION_FILE_PATH` environment variable. It will be read by Roselite
 and be processed. It only accepts file with extensions of `toml`, `yml`, `yaml`, `json`, and `json5`.
+For more details, see [conf.example.yml](./conf.example.toml) file.
 
 That's it. Now you can run your own Roselite and looks at moving heartbeats on your Uptime Kuma instance.
 
@@ -41,27 +56,20 @@ our convention. You can read more about Roselite [on Wikipedia](https://en.wikip
 ## License
 
 ```
-    MIT License
-    
-    Copyright (c) 2023 Teknologi Umum <opensource@teknologiumum.com>
-    
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-    
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-    
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
+Copyright (C) 2023  Teknologi Umum <opensource@teknologiumum.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ```
 
 See [LICENSE](./LICENSE)
