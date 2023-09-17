@@ -1,8 +1,10 @@
-use crate::config::ServerConfig;
-use crate::routes::register_routes;
+use std::net::SocketAddr;
+
 use anyhow::Result;
 use axum::Server;
-use std::net::SocketAddr;
+
+use crate::config::ServerConfig;
+use crate::routes::register_routes;
 
 pub mod config;
 mod handlers;

@@ -1,14 +1,17 @@
-mod cli;
-mod monitor;
+use std::{env, process};
+
 use anyhow::Result;
 use futures::future;
-use std::{env, process};
 use tokio::{signal, spawn};
+
+use roselite_config::Configuration;
+use roselite_server::config::ServerConfig;
 
 use crate::cli::cli;
 use crate::monitor::configure_monitors;
-use roselite_config::Configuration;
-use roselite_server::config::ServerConfig;
+
+mod cli;
+mod monitor;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -32,7 +35,26 @@ async fn main() -> Result<()> {
             Some(error_reporting) => error_reporting.sentry_dsn,
             None => String::new(),
         });
-    let _guard = sentry::init(sentry_dsn);
+    let _guard = sentry::init((
+        sentry_dsn,
+        sentry::ClientOptions {
+            environment: Some(
+                env::var("ENVIRONMENT")
+                    .unwrap_or("production".to_string())
+                    .into(),
+            ),
+            sample_rate: env::var("SENTRY_SAMPLE_RATE")
+                .unwrap_or("1.0".to_string())
+                .parse::<f32>()
+                .unwrap_or(1.0),
+            traces_sample_rate: env::var("SENTRY_TRACES_SAMPLE_RATE")
+                .unwrap_or("0.2".to_string())
+                .parse::<f32>()
+                .unwrap_or(0.2),
+            attach_stacktrace: true,
+            ..Default::default()
+        },
+    ));
 
     let mut handles = vec![];
 
@@ -71,6 +93,7 @@ async fn main() -> Result<()> {
             process::exit(0);
         }
         Err(err) => {
+            sentry::capture_error(&err);
             eprintln!("Unable to listen for shutdown signal: {}", err);
         }
     }

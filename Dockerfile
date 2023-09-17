@@ -1,5 +1,7 @@
 FROM rust:1.69.0-bullseye AS builder
 WORKDIR /app
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y pkg-config libudev-dev perl libssl-dev
 COPY . .
 RUN cargo build --release
 

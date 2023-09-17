@@ -8,16 +8,17 @@ Bear in mind to keep your contributions under the [Code of Conduct](./.github/CO
 
 ## Bug report, ideas, and suggestion
 
-The [issues](https://github.com/teknologi-umum/polarite/issues) page is a great way to communicate to us. 
-Other than that, we have a [Telegram group](https://t.me/teknologi_umum_v2) that you can discuss your ideas into. 
+The [issues](https://github.com/teknologi-umum/polarite/issues) page is a great way to communicate to us.
+Other than that, we have a [Telegram group](https://t.me/teknologi_umum_v2) that you can discuss your ideas into.
 If you're not an Indonesian speaker, it's 100% fine to talk in English there.
 
-Please make sure that the issue you're creating is in as much detail as possible. Poor communication might lead to a big mistake, we're trying to avoid that.
+Please make sure that the issue you're creating is in as much detail as possible. Poor communication might lead to a big
+mistake, we're trying to avoid that.
 
 ## Pull request
 
-**A big heads up before you're writing a breaking change code or a new feature: Please open up an 
-[issue](https://github.com/teknologi-umum/polarite/issues) regarding what you're working on, or just talk in the 
+**A big heads up before you're writing a breaking change code or a new feature: Please open up an
+[issue](https://github.com/teknologi-umum/polarite/issues) regarding what you're working on, or just talk in the
 [Telegram group](https://t.me/teknologi_umum_v2).**
 
 ### Prerequisites
@@ -29,12 +30,13 @@ You will need a few things to get things working:
 
 ### Getting Started
 
-1. [Fork](https://help.github.com/articles/fork-a-repo/) this repository to your own Github account and [clone](https://help.github.com/articles/cloning-a-repository/) it to your local machine.
+1. [Fork](https://help.github.com/articles/fork-a-repo/) this repository to your own Github account
+   and [clone](https://help.github.com/articles/cloning-a-repository/) it to your local machine.
 2. Run `cargo update` to install the dependencies needed.
 3. Run `cargo run` to start the development application.
 4. Have fun!
 
-You are encouraged to use [Conventional Commit](https://www.conventionalcommits.org/en/v1.0.0-beta.2/) 
+You are encouraged to use [Conventional Commit](https://www.conventionalcommits.org/en/v1.0.0-beta.2/)
 for your commit message. But it's not really compulsory.
 
 ### Testing your change
