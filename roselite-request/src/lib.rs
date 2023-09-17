@@ -6,11 +6,10 @@ use reqwest::{Client, Method, StatusCode, Url};
 use roselite_common::heartbeat::Heartbeat;
 use roselite_config::{Monitor, MonitorType};
 
-use crate::bonk_caller::BonkCaller;
 use crate::http_caller::HttpCaller;
 use crate::icmp_caller::IcmpCaller;
 
-mod bonk_caller;
+pub mod bonk_caller;
 pub mod http_caller;
 pub mod icmp_caller;
 
