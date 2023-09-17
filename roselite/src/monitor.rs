@@ -34,10 +34,7 @@ pub fn configure_monitors(monitors: Vec<Monitor>) -> Vec<JoinHandle<()>> {
                 // Bind the transaction / span to the scope:
                 sentry::configure_scope(|scope| scope.set_span(Some(transaction.clone().into())));
 
-                let request = RoseliteRequest::new(
-                    http_copy.clone(),
-                    icmp_copy.clone(),
-                );
+                let request = RoseliteRequest::new(http_copy.clone(), icmp_copy.clone());
                 let current_time = Instant::now();
                 if let Err(err) = request.perform_task(monitor.clone()).await {
                     // Do nothing of this error

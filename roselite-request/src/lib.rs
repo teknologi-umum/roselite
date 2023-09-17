@@ -18,7 +18,6 @@ pub trait RequestCaller: Send + Sync {
     fn call(&self, monitor: Monitor) -> Result<Heartbeat>;
 }
 
-
 pub struct RoseliteRequest {
     http_caller: Box<dyn RequestCaller>,
     icmp_caller: Box<dyn RequestCaller>,
