@@ -187,7 +187,8 @@ listen_address = "127.0.0.1:8321"
 [[monitors]]
 monitor_type = "ICMP"
 push_url = "https://your-uptime-kuma.com/api/push/Eq15E23yc3"
-monitor_url = "https://github.com/healthz""#;
+monitor_target = "https://github.com/healthz"
+"#;
         let _ = file.write(configuration.as_bytes())?;
         file.flush()?;
 
