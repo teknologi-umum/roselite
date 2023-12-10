@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
-futures = "0.3.28"
-anyhow = "1.0.71"
-clap = { version = "4.3", features = ["derive"] }
-sentry = { version = "0.31", features = ["default", "anyhow"] }
-sentry-tracing = { version = "0.31" }
+tokio = { version = "1.35.0", features = ["full"] }
+futures = "0.3.29"
+anyhow = "1.0.75"
+clap = { version = "4.4.11", features = ["derive"] }
+sentry = { version = "0.32.0", default-features = false, features = ["backtrace", "contexts", "panic", "debug-images", "reqwest", "rustls", "anyhow"] }
+sentry-tracing = { version = "0.32.0" }
 roselite-request = { path = "../roselite-request" }
 roselite-config = { path = "../roselite-config" }
 roselite-server = { path = "../roselite-server" }
