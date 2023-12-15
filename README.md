@@ -10,7 +10,7 @@ should look like:
 
 ```json5
 {
-    // This "monitor[lib.rs](roselite-request%2Fsrc%2Flib.rs)s" block is required
+    // This "monitors" block is required
     "monitors": [
         {
             // Monitor type specifies what kind of thing you're monitoring
