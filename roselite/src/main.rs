@@ -60,7 +60,10 @@ async fn main() -> Result<()> {
 
     match matches.subcommand() {
         Some(("server", _)) => {
-            let monitor_handles = configure_monitors(configuration.monitors);
+            let monitor_handles = configure_monitors(
+                configuration.monitors,
+                configuration.features.unwrap_or_default(),
+            );
             handles.extend(monitor_handles);
 
             if let Some(server) = configuration.server {
@@ -77,12 +80,17 @@ async fn main() -> Result<()> {
                 }));
             } else {
                 // If configuration.server is None, we can't continue do anything
-                eprintln!("configuration.server must be filled, either way, don't run it on 'server' mode");
+                eprintln!(
+                    "configuration.server must be filled, either way, don't run it on 'server' mode"
+                );
                 process::exit(10);
             }
         }
         _ => {
-            let monitor_handles = configure_monitors(configuration.monitors);
+            let monitor_handles = configure_monitors(
+                configuration.monitors,
+                configuration.features.unwrap_or_default(),
+            );
             handles.extend(monitor_handles);
         }
     }

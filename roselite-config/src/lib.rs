@@ -41,15 +41,29 @@ pub struct ErrorReporting {
     pub sentry_dsn: String,
 }
 
+#[derive(Deserialize, Clone, Debug, Copy, Default)]
+pub struct Features {
+    pub enable_semyi_status_type: bool,
+}
+
 #[derive(Deserialize, Clone, Debug)]
 pub struct ServerConfig {
     pub listen_address: String,
     pub upstream_kuma: Option<String>,
 }
 
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self {
+            listen_address: "127.0.0.1:8321".to_string(),
+            upstream_kuma: None,
+        }
+    }
+}
 /// Configuration sets a global configuration for the application.
 #[derive(Deserialize, Clone, Debug)]
 pub struct Configuration {
+    pub features: Option<Features>,
     pub error_reporting: Option<ErrorReporting>,
     pub server: Option<ServerConfig>,
     pub monitors: Vec<Monitor>,
@@ -93,6 +107,17 @@ impl Configuration {
                 Err(Error::msg("Invalid file type"))
             }
             Err(_) => Err(Error::msg("Failed opening configuration file")),
+        }
+    }
+}
+
+impl Default for Configuration {
+    fn default() -> Self {
+        Self {
+            features: Some(Features::default()),
+            error_reporting: None,
+            server: Some(ServerConfig::default()),
+            monitors: vec![],
         }
     }
 }

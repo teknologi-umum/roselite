@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use anyhow::Result;
+use axum::Json;
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::Json;
 use reqwest::Url;
 use sentry::integrations::anyhow::capture_anyhow;
-use sentry::{capture_message, Level};
+use sentry::{Level, capture_message};
 use serde::{Deserialize, Serialize};
 
 use roselite_common::heartbeat::Heartbeat;
