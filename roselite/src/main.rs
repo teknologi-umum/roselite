@@ -60,7 +60,7 @@ async fn main() -> Result<()> {
 
     match matches.subcommand() {
         Some(("server", _)) => {
-            let monitor_handles = configure_monitors(configuration.monitors);
+            let monitor_handles = configure_monitors(configuration.monitors, configuration.features);
             handles.extend(monitor_handles);
 
             if let Some(server) = configuration.server {
@@ -82,7 +82,7 @@ async fn main() -> Result<()> {
             }
         }
         _ => {
-            let monitor_handles = configure_monitors(configuration.monitors);
+            let monitor_handles = configure_monitors(configuration.monitors, configuration.features);
             handles.extend(monitor_handles);
         }
     }

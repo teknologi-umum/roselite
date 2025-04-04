@@ -29,7 +29,7 @@ unsafe impl Sync for RoseliteRequest {}
 impl Default for RoseliteRequest {
     fn default() -> Self {
         RoseliteRequest {
-            http_caller: Box::new(HttpCaller::new()),
+            http_caller: Box::new(HttpCaller::new(false)),
             icmp_caller: Box::new(IcmpCaller::new()),
         }
     }

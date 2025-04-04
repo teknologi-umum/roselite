@@ -13,22 +13,24 @@ use crate::RequestCaller;
 #[derive(Clone)]
 pub struct HttpCaller {
     client: Client,
+    pub allow_semyi_status_type: bool,
 }
 
 impl HttpCaller {
-    pub fn new() -> Self {
+    pub fn new(allow_semyi_status_type: bool) -> Self {
         HttpCaller {
             client: Client::builder()
                 .user_agent("Roselite/1.0")
                 .build()
                 .unwrap(),
+            allow_semyi_status_type: allow_semyi_status_type,
         }
     }
 }
 
 impl Default for HttpCaller {
     fn default() -> Self {
-        Self::new()
+        Self::new(false)
     }
 }
 
@@ -58,21 +60,33 @@ impl RequestCaller for HttpCaller {
         let elapsed: Duration = current_instant.elapsed();
 
         let status_code: StatusCode = response.status();
-        let mut ok = true;
-        // everything from 2xx-3xx is considered ok
-        if status_code >= StatusCode::BAD_REQUEST {
-            ok = false;
+
+        let mut status: HeartbeatStatus;
+        if self.allow_semyi_status_type {
+            if status_code >= StatusCode::OK && status_code <= StatusCode::PERMANENT_REDIRECT {
+                status = HeartbeatStatus::Up;
+            } else if status_code == StatusCode::FORBIDDEN || status_code == StatusCode::GONE {
+                status = HeartbeatStatus::LimitedAvailability;
+            } else {
+                status = HeartbeatStatus::Down;
+            }
+
+            if elapsed.as_millis() > 30_000 {
+                status = HeartbeatStatus::DegradedPerformance;
+            }
+        } else {
+            if status_code <= StatusCode::BAD_REQUEST {
+                status = HeartbeatStatus::Up;
+            } else {
+                status = HeartbeatStatus::Down;
+            }
         }
 
         span.finish();
 
         Ok(Heartbeat {
             msg: "OK".to_string(),
-            status: if ok {
-                HeartbeatStatus::Up
-            } else {
-                HeartbeatStatus::Down
-            },
+            status: status,
             ping: elapsed.as_millis(),
         })
     }

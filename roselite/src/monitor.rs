@@ -5,16 +5,16 @@ use tokio::spawn;
 use tokio::task::JoinHandle;
 use tokio::time::{sleep, Instant};
 
-use roselite_config::Monitor;
+use roselite_config::{Features, Monitor};
 use roselite_request::http_caller::HttpCaller;
 use roselite_request::icmp_caller::IcmpCaller;
 use roselite_request::RoseliteRequest;
 
-pub fn configure_monitors(monitors: Vec<Monitor>) -> Vec<JoinHandle<()>> {
+pub fn configure_monitors(monitors: Vec<Monitor>, features: Features) -> Vec<JoinHandle<()>> {
     let mut handles: Vec<JoinHandle<()>> = vec![];
 
     // Build dependency for http_caller and icmp_caller
-    let http_caller = Box::new(HttpCaller::new());
+    let http_caller = Box::new(HttpCaller::new(features.enable_semyi_status_type));
     let icmp_caller = Box::new(IcmpCaller::new());
 
     // Start the monitors

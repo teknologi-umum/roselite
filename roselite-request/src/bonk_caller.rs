@@ -5,7 +5,7 @@ use roselite_config::Monitor;
 use crate::RequestCaller;
 
 #[derive(Clone)]
-/// BonKCaller is a mock or empty struct that's implement
+/// BonkCaller is a mock or empty struct that's implement
 /// RequestCaller. Do not use this as a normal caller transport
 /// unless you know what you're doing.
 pub struct BonkCaller {}

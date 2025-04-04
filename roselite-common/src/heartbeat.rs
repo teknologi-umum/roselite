@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize, Serializer};
 pub enum HeartbeatStatus {
     Up,
     Down,
+    DegradedPerformance,
+    UnderMaintenance,
+    LimitedAvailability,
 }
 
 impl Serialize for HeartbeatStatus {
@@ -14,6 +17,9 @@ impl Serialize for HeartbeatStatus {
         serializer.serialize_str(match self {
             HeartbeatStatus::Up => "up",
             HeartbeatStatus::Down => "down",
+            HeartbeatStatus::DegradedPerformance => "degraded_performance",
+            HeartbeatStatus::UnderMaintenance => "under_maintenance",
+            HeartbeatStatus::LimitedAvailability => "limited_availability",
         })
     }
 }
@@ -23,6 +29,9 @@ impl ToString for HeartbeatStatus {
         match self {
             HeartbeatStatus::Up => String::from("up"),
             HeartbeatStatus::Down => String::from("down"),
+            HeartbeatStatus::DegradedPerformance => String::from("degraded_performance"),
+            HeartbeatStatus::UnderMaintenance => String::from("under_maintenance"),
+            HeartbeatStatus::LimitedAvailability => String::from("limited_availability"),
         }
     }
 }
