@@ -41,17 +41,9 @@ pub struct ErrorReporting {
     pub sentry_dsn: String,
 }
 
-#[derive(Deserialize, Clone, Debug, Copy)]
+#[derive(Deserialize, Clone, Debug, Copy, Default)]
 pub struct Features {
     pub enable_semyi_status_type: bool,
-}
-
-impl Default for Features {
-    fn default() -> Self {
-        Self {
-            enable_semyi_status_type: false,
-        }
-    }
 }
 
 #[derive(Deserialize, Clone, Debug)]

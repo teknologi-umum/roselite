@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize, Serializer};
 
 #[derive(Debug, Clone, Deserialize)]
@@ -24,15 +26,19 @@ impl Serialize for HeartbeatStatus {
     }
 }
 
-impl ToString for HeartbeatStatus {
-    fn to_string(&self) -> String {
-        match self {
-            HeartbeatStatus::Up => String::from("up"),
-            HeartbeatStatus::Down => String::from("down"),
-            HeartbeatStatus::DegradedPerformance => String::from("degraded_performance"),
-            HeartbeatStatus::UnderMaintenance => String::from("under_maintenance"),
-            HeartbeatStatus::LimitedAvailability => String::from("limited_availability"),
-        }
+impl Display for HeartbeatStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                HeartbeatStatus::Up => String::from("up"),
+                HeartbeatStatus::Down => String::from("down"),
+                HeartbeatStatus::DegradedPerformance => String::from("degraded_performance"),
+                HeartbeatStatus::UnderMaintenance => String::from("under_maintenance"),
+                HeartbeatStatus::LimitedAvailability => String::from("limited_availability"),
+            }
+        )
     }
 }
 

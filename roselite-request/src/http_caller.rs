@@ -23,7 +23,7 @@ impl HttpCaller {
                 .user_agent("Roselite/1.0")
                 .build()
                 .unwrap(),
-            allow_semyi_status_type: allow_semyi_status_type,
+            allow_semyi_status_type,
         }
     }
 }
@@ -74,19 +74,17 @@ impl RequestCaller for HttpCaller {
             if elapsed.as_millis() > 30_000 {
                 status = HeartbeatStatus::DegradedPerformance;
             }
+        } else if status_code <= StatusCode::BAD_REQUEST {
+            status = HeartbeatStatus::Up;
         } else {
-            if status_code <= StatusCode::BAD_REQUEST {
-                status = HeartbeatStatus::Up;
-            } else {
-                status = HeartbeatStatus::Down;
-            }
+            status = HeartbeatStatus::Down;
         }
 
         span.finish();
 
         Ok(Heartbeat {
             msg: "OK".to_string(),
-            status: status,
+            status,
             ping: elapsed.as_millis(),
         })
     }
