@@ -86,7 +86,7 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: "--locked --release"
 
-      - name: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: roselite-${{ matrix.platform.os-name }}-${{ matrix.platform.target }}
           path: target/release/roselite
