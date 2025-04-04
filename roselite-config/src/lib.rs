@@ -63,7 +63,7 @@ impl Default for ServerConfig {
 /// Configuration sets a global configuration for the application.
 #[derive(Deserialize, Clone, Debug)]
 pub struct Configuration {
-    pub features: Features,
+    pub features: Option<Features>,
     pub error_reporting: Option<ErrorReporting>,
     pub server: Option<ServerConfig>,
     pub monitors: Vec<Monitor>,
@@ -114,7 +114,7 @@ impl Configuration {
 impl Default for Configuration {
     fn default() -> Self {
         Self {
-            features: Features::default(),
+            features: Some(Features::default()),
             error_reporting: None,
             server: Some(ServerConfig::default()),
             monitors: vec![],
