@@ -1,4 +1,4 @@
-use clap::{arg, Command};
+use clap::{Command, arg};
 
 pub fn cli() -> Command {
     Command::new("roselite")
