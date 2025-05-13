@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 
@@ -12,7 +14,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func AgentAction(ctx context.Context, c *cli.Command) error {
+func ServerAction(ctx context.Context, c *cli.Command) error {
 	var configuration Configuration
 	err := configor.New(&configor.Config{}).Load(&configuration, c.String("config"))
 	if err != nil {
@@ -29,12 +31,17 @@ func AgentAction(ctx context.Context, c *cli.Command) error {
 		return fmt.Errorf("creating TLS config: %w", err)
 	}
 
-	agent := roselite.NewAgent(roselite.AgentOptions{
-		Monitors:               monitors,
+	serverTLSConfig, err := configuration.ServerConfig.TLSConfig.ToTLSConfig()
+	if err != nil {
+		return fmt.Errorf("creating TLS config: %w", err)
+	}
+
+	server := roselite.NewServer(roselite.ServerOptions{
+		ListeningAddress:       configuration.ServerConfig.ListenAddress,
 		UpstreamKumaAddress:    configuration.UpstreamConfig.BaseUrl,
 		UpstreamRequestHeaders: configuration.UpstreamConfig.RequestHeaders,
 		UpstreamTLSConfig:      upstreamTLSConfig,
-		RegionIdentifier:       configuration.Region,
+		ServerTLSConfig:        serverTLSConfig,
 	})
 
 	exitSignal := make(chan os.Signal, 1)
@@ -42,14 +49,20 @@ func AgentAction(ctx context.Context, c *cli.Command) error {
 
 	go func() {
 		<-exitSignal
-		err := agent.Close()
+		err := server.Shutdown(ctx)
 		if err != nil {
 			slog.Warn("closing agent", slog.String("error", err.Error()))
 		}
 	}()
 
-	if err := agent.Start(); err != nil {
-		return fmt.Errorf("starting agent: %w", err)
+	if configuration.ServerConfig.TLSConfig.CertificateFile != "" && configuration.ServerConfig.TLSConfig.PrivateKeyFile != "" {
+		err = server.ListenAndServeTLS()
+	} else {
+		err = server.ListenAndServe()
 	}
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("failed to start server: %v", err)
+	}
+
 	return nil
 }

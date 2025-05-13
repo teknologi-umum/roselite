@@ -32,7 +32,7 @@ func main() {
 		Usage:          "Active relay for Uptime Kuma's push monitor type",
 		Version:        version,
 		Description:    "Active relay for Uptime Kuma's push monitor type. It is also compatible with Semyi (made by Teknologi Umum), in which more data related to the monitor is sent to Semyi instance.",
-		DefaultCommand: "agent",
+		DefaultCommand: "",
 		Commands: []*cli.Command{
 			{
 				Name:    "agent",
@@ -44,11 +44,10 @@ func main() {
 				Name:    "server",
 				Version: version,
 				Usage:   "Start Roselite in server mode, it will expose HTTP port",
-				Action: func(ctx context.Context, c *cli.Command) error {
-					return nil
-				},
+				Action:  ServerAction,
 			},
 		},
+		Action: DefaultAction,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "config",
