@@ -13,7 +13,7 @@ import (
 func TestIcmpCaller(t *testing.T) {
     ctx := sentry.SetHubOnContext(t.Context(), sentry.CurrentHub().Clone())
     privileged := false
-    if runtime.GOOS == "windows" {
+    if runtime.GOOS == "windows" || runtime.GOOS == "linux" {
         privileged = true
     }
     caller := roselite.IcmpCaller{Privileged: privileged}
