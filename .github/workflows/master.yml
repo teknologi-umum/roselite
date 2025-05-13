@@ -54,8 +54,8 @@ jobs:
           name: ${{ matrix.os.binary_name }}
           path: ${{ matrix.os.binary_name }}
 
-  cd:
-    name: CD
+  docker-image-build:
+    name: Docker Image Build
     needs:
       - ci
     runs-on: ubuntu-latest
@@ -98,3 +98,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+
+# TODO: Additional binary build for:
+#       - FreeBSD x86_64
+#       - RISC-V 64
