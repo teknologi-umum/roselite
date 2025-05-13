@@ -16,12 +16,16 @@ jobs:
         os:
           - name: "Linux amd64"
             runner: "ubuntu-24.04"
+            binary_name: "roselite-linux-amd64"
           - name: "Linux arm64"
             runner: "ubuntu-24.04-arm"
+            binary_name: "roselite-linux-arm64"
           - name: "MacOS"
             runner: "macos-latest"
+            binary_name: "roselite-darwin"
           - name: "Windows"
             runner: "windows-latest"
+            binary_name: "roselite-windows-x64.exe"
     timeout-minutes: 30
     steps:
       - name: Checkout repository
@@ -33,7 +37,7 @@ jobs:
           go-version: "1.24"
 
       - name: Build
-        run: go build -buildvcs=false ./cmd/
+        run: go build -buildvcs=false -o ${{ matrix.os.binary_name }} -ldflags="-X 'main.version=$(git describe --tags --always)'" ./cmd/
 
       - name: Test
         run: go test -v -coverprofile='coverage.out' -covermode=atomic ./...
