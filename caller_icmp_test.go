@@ -1,6 +1,7 @@
 package roselite_test
 
 import (
+    "os"
     "runtime"
     "strings"
     "testing"
@@ -11,6 +12,10 @@ import (
 )
 
 func TestIcmpCaller(t *testing.T) {
+    if os.Getenv("CI") != "" {
+        t.Skip("Skipping ICMP test on CI")
+    }
+
     ctx := sentry.SetHubOnContext(t.Context(), sentry.CurrentHub().Clone())
     privileged := false
     if runtime.GOOS == "windows" {
