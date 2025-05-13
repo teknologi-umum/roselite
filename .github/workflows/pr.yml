@@ -37,6 +37,10 @@ jobs:
         with:
           go-version: "1.24"
 
+      - name: Setup sysctl for Linux
+        if: ${{ matrix.os.runner == 'ubuntu-24.04' || matrix.os.runner == 'ubuntu-24.04-arm' || matrix.os.runner == 'macos-latest' }}
+        run: sysctl -w net.ipv4.ping_group_range="0 2147483647"
+
       - name: Build
         run: go build -buildvcs=false -o ${{ matrix.os.binary_name }} -ldflags="-X 'main.version=$(git describe --tags --always)'" ./cmd/
 
