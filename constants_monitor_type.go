@@ -1,6 +1,9 @@
 package roselite
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 type MonitorType uint8
 
@@ -22,7 +25,7 @@ func (m MonitorType) String() string {
 }
 
 func MonitorTypeFromString(s string) (MonitorType, error) {
-	switch s {
+	switch strings.ToUpper(s) {
 	case "HTTP":
 		return MonitorTypeHTTP, nil
 	case "ICMP":

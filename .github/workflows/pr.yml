@@ -3,46 +3,43 @@ name: PR
 on:
   pull_request:
 
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
-    name: CI
-    runs-on: ubuntu-latest
+    name: CI / ${{ matrix.os.name }}
+    runs-on: ${{ matrix.os.runner }}
+    strategy:
+      matrix:
+        os:
+          - name: "Linux amd64"
+            runner: "ubuntu-24.04"
+          - name: "Linux arm64"
+            runner: "ubuntu-24.04-arm"
+          - name: "MacOS"
+            runner: "macos-latest"
+          - name: "Windows"
+            runner: "windows-latest"
     timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@main
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-          extra_args: --debug --only-verified
+          go-version: "1.24"
 
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+      - name: Build
+        run: go build -buildvcs=false ./cmd/
 
-      - name: Formatting check
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - name: Test
+        run: go test -v -coverprofile='coverage.out' -covermode=atomic ./...
 
-      - name: Lint check
-        uses: actions-rs/cargo@v1
+      - uses: codecov/codecov-action@v5
+        continue-on-error: true
         with:
-          command: clippy
-          args: --workspace -- -D warnings
-
-      - name: Run test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --workspace --no-fail-fast
+          files: ./coverage.out
+          token: ${{ secrets.CODECOV_TOKEN }}

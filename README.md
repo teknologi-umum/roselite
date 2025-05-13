@@ -5,7 +5,7 @@ Roselite is a simple application to relay your [Uptime Kuma](https://github.com/
 
 ## Usage
 
-Create a file using TOML, YAML, or JSON (or JSON5) containing the configuration for Roselite. The configuration in JSON
+Create a file using TOML, YAML, or JSON containing the configuration for Roselite. The configuration in JSON
 should look like:
 
 ```json5
