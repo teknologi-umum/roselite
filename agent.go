@@ -107,10 +107,10 @@ func NewAgent(options AgentOptions) *Agent {
 					break
 				}
 
+				// Although it may be an error, the Heartbeat struct must not be empty, we must still send it to
+				// the upstream instance.
 				if err != nil {
 					sentry.GetHubFromContext(ctx).CaptureException(err)
-					span.Finish()
-					cancel()
 				}
 
 				err = callKumaEndpoint(ctx, a.upstreamKumaAddress, a.upstreamRequestHeaders, a.httpClient, monitor.ID, heartbeat)

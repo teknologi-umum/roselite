@@ -24,7 +24,10 @@ func (h *HttpCaller) Call(ctx context.Context, monitor Monitor) (Heartbeat, erro
 
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, monitor.MonitorTarget, nil)
 	if err != nil {
-		return Heartbeat{}, err
+		return Heartbeat{
+			Status:            HeartbeatStatusDown,
+			AdditionalMessage: null.StringFrom(err.Error()),
+		}, err
 	}
 
 	// Custom user agent. It does not matter if it got overwritten by the user.
@@ -99,16 +102,14 @@ func (h *HttpCaller) Call(ctx context.Context, monitor Monitor) (Heartbeat, erro
 
 	var httpProtocol, tlsVersion, tlsCipherName string
 	var tlsExpiryDate time.Time
-	if response != nil {
-		httpProtocol = response.Proto
-		if response.TLS != nil {
-			tlsVersion = tls.VersionName(response.TLS.Version)
-			tlsCipherName = tls.CipherSuiteName(response.TLS.CipherSuite)
-			if len(response.TLS.PeerCertificates) > 0 {
-				cert := response.TLS.PeerCertificates[0]
-				if cert != nil {
-					tlsExpiryDate = cert.NotAfter
-				}
+	httpProtocol = response.Proto
+	if response.TLS != nil {
+		tlsVersion = tls.VersionName(response.TLS.Version)
+		tlsCipherName = tls.CipherSuiteName(response.TLS.CipherSuite)
+		if len(response.TLS.PeerCertificates) > 0 {
+			cert := response.TLS.PeerCertificates[0]
+			if cert != nil {
+				tlsExpiryDate = cert.NotAfter
 			}
 		}
 	}

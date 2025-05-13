@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+var ErrMonitorTypeInvalid = errors.New("invalid monitor type")
+
 type MonitorType uint8
 
 const (
@@ -31,6 +33,6 @@ func MonitorTypeFromString(s string) (MonitorType, error) {
 	case "ICMP":
 		return MonitorTypeICMP, nil
 	default:
-		return MonitorTypeUnknown, errors.New("unknown monitor type")
+		return MonitorTypeUnknown, ErrMonitorTypeInvalid
 	}
 }

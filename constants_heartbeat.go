@@ -26,8 +26,12 @@ func HeartbeatFromQuery(query url.Values) Heartbeat {
 	tlsVersion := query.Get("tls_version")
 	tlsCipherName := query.Get("tls_cipher")
 	tlsExpiry := query.Get("tls_expiry")
-	parsedTlsExpiryDate, _ := strconv.ParseInt(tlsExpiry, 10, 64)
-	tlsExpiryDate := time.Unix(parsedTlsExpiryDate, 0)
+
+	var tlsExpiryDate null.Time
+	parsedTlsExpiryDate, err := strconv.ParseInt(tlsExpiry, 10, 64)
+	if err == nil {
+		tlsExpiryDate = null.NewTime(time.Unix(parsedTlsExpiryDate, 0), true)
+	}
 
 	return Heartbeat{
 		Status:            status,
@@ -36,7 +40,7 @@ func HeartbeatFromQuery(query url.Values) Heartbeat {
 		HttpProtocol:      null.NewString(httpProtocol, httpProtocol != ""),
 		TLSVersion:        null.NewString(tlsVersion, tlsVersion != ""),
 		TLSCipherName:     null.NewString(tlsCipherName, tlsCipherName != ""),
-		TLSExpiryDate:     null.NewTime(tlsExpiryDate, !tlsExpiryDate.IsZero()),
+		TLSExpiryDate:     tlsExpiryDate,
 	}
 }
 
@@ -45,7 +49,7 @@ func (h Heartbeat) ToQuery() url.Values {
 	query.Set("status", h.Status.String())
 	query.Set("ping", strconv.FormatInt(h.Latency, 10))
 	if h.AdditionalMessage.Valid {
-		query.Set("message", h.AdditionalMessage.ValueOrZero())
+		query.Set("msg", h.AdditionalMessage.ValueOrZero())
 	}
 	if h.HttpProtocol.Valid {
 		query.Set("http_protocol", h.HttpProtocol.ValueOrZero())

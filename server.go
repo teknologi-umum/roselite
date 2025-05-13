@@ -59,7 +59,7 @@ func NewServer(options ServerOptions) *Server {
 	mux.HandleFunc("GET /ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	})
 
 	mux.HandleFunc("/api/push/{id}", func(w http.ResponseWriter, r *http.Request) {

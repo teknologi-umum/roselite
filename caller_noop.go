@@ -10,7 +10,7 @@ type NoopCaller struct {
 }
 
 // Call implements Caller.
-func (n *NoopCaller) Call(ctx context.Context, monitor Monitor) (Heartbeat, error) {
+func (n *NoopCaller) Call(context.Context, Monitor) (Heartbeat, error) {
 	return Heartbeat{
 		Status:            HeartbeatStatusUp,
 		Latency:           0,

@@ -38,9 +38,7 @@ func main() {
 				Name:    "agent",
 				Version: version,
 				Usage:   "Start Roselite in agent mode, it will not expose any HTTP port",
-				Action: func(ctx context.Context, c *cli.Command) error {
-					return nil
-				},
+				Action:  AgentAction,
 			},
 			{
 				Name:    "server",
