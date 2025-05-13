@@ -2,44 +2,49 @@ name: PR
 
 on:
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci:
-    name: CI / ${{ matrix.architecture.name }}
-    runs-on: ${{ matrix.architecture.runner }}
+    name: CI / ${{ matrix.os.name }}
+    runs-on: ${{ matrix.os.runner }}
     strategy:
       matrix:
-        architecture:
-          - name: "ARM64"
-            runner: "ubuntu-24.04-arm"
-          - name: "AMD64"
+        os:
+          - name: "Linux amd64"
             runner: "ubuntu-24.04"
+            binary_name: "roselite-linux-amd64"
+          - name: "Linux arm64"
+            runner: "ubuntu-24.04-arm"
+            binary_name: "roselite-linux-arm64"
+          - name: "MacOS"
+            runner: "macos-latest"
+            binary_name: "roselite-darwin"
+          - name: "Windows"
+            runner: "windows-latest"
+            binary_name: "roselite-windows-x64.exe"
     timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+          go-version: "1.24"
 
-      - name: Formatting check
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - name: Build
+        run: go build -buildvcs=false -o ${{ matrix.os.binary_name }} -ldflags="-X 'main.version=$(git describe --tags --always)'" ./cmd/
 
-      - name: Lint check
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --workspace -- -D warnings
+      - name: Test
+        run: go test -v -coverprofile='coverage.out' -covermode=atomic ./...
 
-      - name: Run test
-        uses: actions-rs/cargo@v1
+      - uses: codecov/codecov-action@v5
+        continue-on-error: true
         with:
-          command: test
-          args: --workspace --no-fail-fast
+          files: ./coverage.out
+          token: ${{ secrets.CODECOV_TOKEN }}

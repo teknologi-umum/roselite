@@ -5,7 +5,7 @@ Roselite is a simple application to relay your [Uptime Kuma](https://github.com/
 
 ## Usage
 
-Create a file using TOML, YAML, or JSON (or JSON5) containing the configuration for Roselite. The configuration in JSON
+Create a file using TOML, YAML, or JSON containing the configuration for Roselite. The configuration in JSON
 should look like:
 
 ```json5
@@ -20,7 +20,7 @@ should look like:
             // This is the endpoint that you can acquire from your Uptime Kuma instance
             "push_url": "https://your-uptime-kuma.com/api/push/Eq15E23yc3",
             // This is the endpoint to your private/secluded server within an internal network
-            "monitor_target": "https://your-internal-end[lib.rs](roselite-config%2Fsrc%2Flib.rs)point.com"
+            "monitor_target": "https://your-internal-endpoint.com"
         },
         // ...
     ],
@@ -56,7 +56,7 @@ our convention. You can read more about Roselite [on Wikipedia](https://en.wikip
 ## License
 
 ```
-Copyright (C) 2023  Teknologi Umum <opensource@teknologiumum.com>
+Copyright (C) 2025  Teknologi Umum <opensource@teknologiumum.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
