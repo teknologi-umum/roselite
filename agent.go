@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"sync"
@@ -21,6 +22,7 @@ type Agent struct {
 	httpClient             *http.Client
 	upstreamRequestHeaders map[string]string
 	upstreamKumaAddress    string
+	enableLogging          bool
 }
 
 type AgentOptions struct {
@@ -29,6 +31,7 @@ type AgentOptions struct {
 	UpstreamRequestHeaders map[string]string
 	UpstreamTLSConfig      *tls.Config
 	RegionIdentifier       string
+	EnableLogging          bool
 }
 
 var _ io.Closer = (*Agent)(nil)
@@ -76,6 +79,7 @@ func NewAgent(options AgentOptions) *Agent {
 		wg:                     wg,
 		shutdownCtx:            ctx,
 		shutdownCancel:         cancel,
+		enableLogging:          options.EnableLogging,
 	}
 
 	for _, monitor := range options.Monitors {
@@ -90,6 +94,10 @@ func NewAgent(options AgentOptions) *Agent {
 				span := sentry.StartSpan(ctx, "function", sentry.WithDescription("Agent.Start.monitor.loop"))
 				span.SetData("roselite.monitor.id", monitor.ID)
 				span.SetData("roselite.monitor.type", monitor.MonitorType.String())
+				ctx = span.Context()
+				if a.enableLogging {
+					slog.DebugContext(ctx, "Calling monitor", slog.String("id", monitor.ID), slog.String("type", monitor.MonitorType.String()), slog.String("target", monitor.MonitorTarget))
+				}
 
 				var heartbeat Heartbeat
 				var err error
@@ -110,11 +118,17 @@ func NewAgent(options AgentOptions) *Agent {
 				// Although it may be an error, the Heartbeat struct must not be empty, we must still send it to
 				// the upstream instance.
 				if err != nil {
+					if a.enableLogging {
+						slog.ErrorContext(ctx, "Error calling monitor", slog.String("id", monitor.ID), slog.String("type", monitor.MonitorType.String()), slog.String("target", monitor.MonitorTarget), slog.String("error", err.Error()))
+					}
 					sentry.GetHubFromContext(ctx).CaptureException(err)
 				}
 
 				err = callKumaEndpoint(ctx, a.upstreamKumaAddress, a.upstreamRequestHeaders, a.httpClient, monitor.ID, heartbeat)
 				if err != nil {
+					if a.enableLogging {
+						slog.ErrorContext(ctx, "Error calling Kuma", slog.String("id", monitor.ID), slog.String("type", monitor.MonitorType.String()), slog.String("target", monitor.MonitorTarget), slog.String("error", err.Error()))
+					}
 					sentry.GetHubFromContext(ctx).CaptureException(err)
 				}
 				span.Finish()

@@ -1,14 +1,14 @@
 package main_test
 
 import (
-    "encoding/json"
-    "testing"
+	"encoding/json"
+	"testing"
 
-    main "github.com/teknologi-umum/roselite/cmd"
+	main "github.com/teknologi-umum/roselite/cmd"
 )
 
 func TestConfiguration(t *testing.T) {
-    jsonConfiguration := `{
+	jsonConfiguration := `{
     "error_reporting": {
         "sentry_dsn": "https://00000000000000@ingest.sentry.io/0",
         "sentry_sample_rate": 1.0,
@@ -49,9 +49,9 @@ func TestConfiguration(t *testing.T) {
     ]
 }`
 
-    var configuration main.Configuration
-    err := json.Unmarshal([]byte(jsonConfiguration), &configuration)
-    if err != nil {
-        t.Errorf("unexpected error: %s", err)
-    }
+	var configuration main.Configuration
+	err := json.Unmarshal([]byte(jsonConfiguration), &configuration)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
 }

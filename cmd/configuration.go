@@ -21,6 +21,9 @@ type ErrorReporting struct {
 
 	// SentryTracesSampleRate defines the sample rate for tracing events to be sent to Sentry, defaulting to 1.0.
 	SentryTracesSampleRate float64 `json:"sentry_traces_sample_rate" toml:"sentry_traces_sample_rate" yaml:"sentry_traces_sample_rate" env:"SENTRY_TRACES_SAMPLE_RATE" default:"1.0"`
+
+	// LogLevel specifies the logging level for the application, with a default value of "info".
+	LogLevel slog.Level `json:"log_level" toml:"log_level" yaml:"log_level" env:"LOG_LEVEL" default:"info"`
 }
 
 // TLSConfig represents the configuration for TLS, including file paths for certificates and an option to skip verification.
